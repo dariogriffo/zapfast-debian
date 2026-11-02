@@ -1,0 +1,42 @@
+#!/usr/bin/make -f
+DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+ZAPFAST_VERSION := $(shell dpkg-parsechangelog -S Version | sed 's/[-~].*//')
+ZAPFAST_RELEASE := zapfast_$(ZAPFAST_VERSION)_$(DEB_HOST_ARCH)
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+
+override_dh_auto_build:
+	@case "$(DEB_HOST_ARCH)" in \
+		amd64|arm64) ;; \
+		*) echo "Unsupported architecture: $(DEB_HOST_ARCH)"; exit 1 ;; \
+	esac; \
+	echo "Downloading $(ZAPFAST_RELEASE).deb..."; \
+	wget -q "https://github.com/crmne/zapfast/releases/download/v$(ZAPFAST_VERSION)/$(ZAPFAST_RELEASE).deb"; \
+	dpkg-deb -x "$(ZAPFAST_RELEASE).deb" "$(ZAPFAST_RELEASE)"; \
+	rm -f "$(ZAPFAST_RELEASE).deb"; \
+	[ -f "$(ZAPFAST_RELEASE)/usr/bin/zapfast" ] || { echo "Unexpected package layout: $(ZAPFAST_RELEASE)/usr/bin/zapfast not found"; exit 1; }
+
+# Upstream's licence copy goes to debian/copyright's place instead, and no
+# zapfast-portable.txt marker is installed, so the built-in updater stays off.
+override_dh_auto_install:
+	install -d -m 755 debian/zapfast/usr
+	cp -r "$(ZAPFAST_RELEASE)/usr/." debian/zapfast/usr/
+	rm -rf debian/zapfast/usr/share/licenses
+	chmod 755 debian/zapfast/usr/bin/zapfast
+
+override_dh_auto_test:
+
+override_dh_auto_clean:
+	rm -rf zapfast_*_amd64 zapfast_*_arm64 || true
+
+# Prebuilt upstream binary: keep it as shipped, Depends is written by hand.
+override_dh_strip:
+
+override_dh_dwz:
+
+override_dh_shlibdeps:
+
+override_dh_makeshlibs:

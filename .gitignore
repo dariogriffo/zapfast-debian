@@ -1,0 +1,18 @@
+# .deb Packages
+*.deb
+
+# Source packages
+*.dsc
+*.orig.tar.gz
+*.debian.tar.xz
+
+# Downloaded / extracted upstream release artifacts
+zapfast_*_amd64/
+zapfast_*_arm64/
+zapfast-*/
+/usr/
+/DEBIAN/
+
+.idea/*
+.DS_Store
+/t/
